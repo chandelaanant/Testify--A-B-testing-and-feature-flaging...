@@ -1,0 +1,139 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap");
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg: #080c10;
+  --bg2: #0d1117;
+  --bg3: #131920;
+  --border: rgba(255, 255, 255, 0.07);
+  --border2: rgba(255, 255, 255, 0.13);
+  --text: #e6edf3;
+  --muted: #7d8590;
+  --accent: #3af07a;
+  --cyan: #1be5ff;
+  --yellow: #f7c948;
+  --red: #ff4f6a;
+  --font-display: "Syne", sans-serif;
+  --font-body: "DM Sans", sans-serif;
+  --font-mono: "DM Mono", monospace;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.6;
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  font-family: var(--font-body);
+}
+
+/* Grid background */
+.grid-bg::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.024) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.024) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Orbs */
+.orb {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(110px);
+  pointer-events: none;
+  z-index: 0;
+}
+.orb-1 {
+  width: 600px;
+  height: 600px;
+  background: #1be5ff;
+  top: -200px;
+  right: -100px;
+  opacity: 0.13;
+}
+.orb-2 {
+  width: 500px;
+  height: 500px;
+  background: #3af07a;
+  bottom: -120px;
+  left: -100px;
+  opacity: 0.1;
+}
+.orb-3 {
+  width: 300px;
+  height: 300px;
+  background: #f7c948;
+  top: 40%;
+  left: 40%;
+  opacity: 0.06;
+}
+
+/* Fade up animation */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+.fade-up-1 {
+  opacity: 0;
+  animation: fadeUp 0.6s ease forwards 0.1s;
+}
+.fade-up-2 {
+  opacity: 0;
+  animation: fadeUp 0.6s ease forwards 0.25s;
+}
+.fade-up-3 {
+  opacity: 0;
+  animation: fadeUp 0.6s ease forwards 0.4s;
+}
+.fade-up-4 {
+  opacity: 0;
+  animation: fadeUp 0.6s ease forwards 0.55s;
+}
+.fade-up-5 {
+  opacity: 0;
+  animation: fadeUp 0.6s ease forwards 0.7s;
+}
