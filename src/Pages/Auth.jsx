@@ -23,25 +23,38 @@ export default function Auth() {
         if (/[^A-Za-z0-9]/.test(val)) score++
         setStrength(score)
     }
-
+    /*function handleSignin(e) {
+        e.preventDefault()
+        const terms = e.target.terms.checked
+        if (!terms) { setError('Please accept the Terms of Service.'); return }
+        setError('')
+        navigate('/role-selection')
+    }*/
     function handleSignin(e) {
         e.preventDefault()
         const email = e.target.email.value
         const pwd = e.target.password.value
         if (!email || !pwd) { setError('Please fill in all fields.'); return }
         setError('')
-        // TODO: POST /api/auth/login
-        alert('Connect to your Node.js /api/auth/login endpoint!')
+        navigate('/role-selection')
+        /*// TODO: POST /api/auth/login
+        alert('Connect to your Node.js /api/auth/login endpoint!')*/
     }
-
     function handleSignup(e) {
+        e.preventDefault()
+        const terms = e.target.terms.checked
+        if (!terms) { setError('Please accept the Terms of Service.'); return }
+        setError('')
+        navigate('/role-selection')
+    }
+    /*function handleSignup(e) {
         e.preventDefault()
         const terms = e.target.terms.checked
         if (!terms) { setError('Please accept the Terms of Service.'); return }
         setError('')
         // TODO: POST /api/auth/register
         alert('Connect to your Node.js /api/auth/register endpoint!')
-    }
+    }*/
 
     const strengthColors = ['', '#ff4f6a', '#ff4f6a', '#f7c948', '#3af07a']
     const strengthLabels = ['', 'Weak', 'Weak', 'Good', 'Strong']
@@ -394,4 +407,11 @@ function SocialBtns() {
             ))}
         </div>
     )
+}
+function handleSignup(e) {
+    e.preventDefault()
+    const terms = e.target.terms.checked
+    if (!terms) { setError('Please accept the Terms of Service.'); return }
+    setError('')
+    navigate('/role-selection')
 }
