@@ -48,7 +48,7 @@ export default function Auth() {
     }
     async function handleSignup(e) {
         e.preventDefault()
-        const name = '${e.target.first.value} ${e.target.last.value}'
+        const name = `${e.target.first.value} ${e.target.last.value}`
         const email = e.target.email.value
         const pwd = e.target.password.value
         const terms = e.target.terms.checked
@@ -424,11 +424,4 @@ function SocialBtns() {
             ))}
         </div>
     )
-}
-function handleSignup(e) {
-    e.preventDefault()
-    const terms = e.target.terms.checked
-    if (!terms) { setError('Please accept the Terms of Service.'); return }
-    setError('')
-    navigate('/role-selection')
 }

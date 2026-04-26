@@ -2,55 +2,43 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import { setRoleUser } from '../services/api'
+import { useAuth } from '../context/AuthContext'
 
 const roles = [
     {
-        id: 'admin',
-        title: 'Admin',
-        icon: '🛡️',
+        id: 'admin', title: 'Admin', icon: '🛡️',
         desc: 'Full access to everything. Manage team members, billing, projects, and all feature flags.',
         perms: ['Manage team & billing', 'Create & delete projects', 'Full flag & experiment control', 'View all analytics'],
-        color: 'rgba(255,79,106,0.1)',
-        border: 'rgba(255,79,106,0.25)',
-        accent: '#ff4f6a',
+        color: 'rgba(255,79,106,0.1)', border: 'rgba(255,79,106,0.25)', accent: '#ff4f6a',
     },
     {
-        id: 'developer',
-        title: 'Developer',
-        icon: '⚡',
+        id: 'developer', title: 'Developer', icon: '⚡',
         desc: 'Create and manage feature flags, run A/B experiments, and integrate the SDK.',
         perms: ['Create & toggle flags', 'Run A/B experiments', 'Manage targeting rules', 'View project analytics'],
-        color: 'rgba(58,240,122,0.1)',
-        border: 'rgba(58,240,122,0.25)',
-        accent: '#3af07a',
+        color: 'rgba(58,240,122,0.1)', border: 'rgba(58,240,122,0.25)', accent: '#3af07a',
     },
     {
-        id: 'viewer',
-        title: 'Viewer',
-        icon: '👁️',
+        id: 'viewer', title: 'Viewer', icon: '👁️',
         desc: 'Read-only access to analytics, flag states, and experiment results. No editing allowed.',
         perms: ['View all flags', 'View experiment results', 'View analytics dashboard', 'No edit permissions'],
-        color: 'rgba(27,229,255,0.1)',
-        border: 'rgba(27,229,255,0.25)',
-        accent: '#1be5ff',
+        color: 'rgba(27,229,255,0.1)', border: 'rgba(27,229,255,0.25)', accent: '#1be5ff',
     },
 ]
 
 export default function RoleSelection() {
     const navigate = useNavigate()
+    const { user } = useAuth()          // ✅ inside the component
     const [selected, setSelected] = useState(null)
     const [loading, setLoading] = useState(false)
 
-    // NEW
     async function handleContinue() {
-        if (!selected) return
+        if (!selected) return           // ✅ guard first
         setLoading(true)
         try {
-            await setRoleUser(selected)
+            await setRoleUser(user.id, selected)  // ✅ single call, correct args
             navigate('/dashboard')
         } catch (err) {
             console.error('Failed to set role:', err)
-            // optionally show an error to the user
         } finally {
             setLoading(false)
         }

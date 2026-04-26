@@ -1,19 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getAllFlags, getAllExperiments } from '../services/api'
-
-const flags = [
-    { name: 'new-checkout-flow', desc: 'Redesigned cart + payment UX', pct: '50%', status: true, env: 'production' },
-    { name: 'ai-recommendations', desc: 'ML-powered product suggestions', pct: 'pro users', status: false, env: 'production' },
-    { name: 'dark-mode-v2', desc: 'Updated dark theme tokens', pct: '100%', status: true, env: 'staging' },
-    { name: 'beta-analytics', desc: 'Advanced reporting dashboard', pct: '10%', status: false, env: 'development' },
-]
-
-const experiments = [
-    { name: 'Checkout CTA Test', variants: 2, traffic: '50%', status: 'running', conversion: '4.2%' },
-    { name: 'Onboarding Flow v2', variants: 3, traffic: '30%', status: 'running', conversion: '7.8%' },
-    { name: 'Pricing Page Layout', variants: 2, traffic: '100%', status: 'completed', conversion: '2.1%' },
-]
 
 const activity = [
     { action: 'Flag enabled', target: 'new-checkout-flow', user: 'you', time: '2m ago', color: '#3af07a' },
@@ -22,7 +9,6 @@ const activity = [
     { action: 'Flag created', target: 'beta-analytics', user: 'you', time: '1d ago', color: '#f7c948' },
     { action: 'Experiment ended', target: 'Pricing Page Layout', user: 'you', time: '2d ago', color: '#7d8590' },
 ]
-
 const navItems = [
     { id: 'overview', label: 'Overview', icon: '▦' },
     { id: 'flags', label: 'Feature Flags', icon: '⚑' },
