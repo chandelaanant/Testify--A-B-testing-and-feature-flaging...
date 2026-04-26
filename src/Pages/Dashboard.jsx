@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getAllFlags, getAllExperiments } from '../services/api'
+import { getAllFlags, getAllExperiments, createFlag, updateFlag, deleteFlag, createExperiment, deleteExperiment } from '../services/api'
 
 const activity = [
     { action: 'Flag enabled', target: 'new-checkout-flow', user: 'you', time: '2m ago', color: '#3af07a' },
@@ -9,6 +9,7 @@ const activity = [
     { action: 'Flag created', target: 'beta-analytics', user: 'you', time: '1d ago', color: '#f7c948' },
     { action: 'Experiment ended', target: 'Pricing Page Layout', user: 'you', time: '2d ago', color: '#7d8590' },
 ]
+
 const navItems = [
     { id: 'overview', label: 'Overview', icon: '▦' },
     { id: 'flags', label: 'Feature Flags', icon: '⚑' },
@@ -24,6 +25,11 @@ export default function Dashboard() {
     const [experiments, setExperiments] = useState([])
     const [loading, setLoading] = useState(true)
     const [flagStates, setFlagStates] = useState([])
+    const [showFlagModal, setShowFlagModal] = useState(false)
+    const [newFlag, setNewFlag] = useState({ key: '', is_enabled: true, rollout_percentage: 100 })
+    const [showExpModal, setShowExpModal] = useState(false)
+    const [newExp, setNewExp] = useState({ name: '', is_active: true })
+
     useEffect(() => {
         async function fetchData() {
             try {
@@ -43,8 +49,59 @@ export default function Dashboard() {
         fetchData()
     }, [])
 
-    function toggleFlag(i) {
-        setFlagStates(prev => prev.map((s, idx) => idx === i ? !s : s))
+    async function toggleFlag(i) {
+        const flag = flags[i]
+        const newState = !flagStates[i]
+        setFlagStates(prev => prev.map((s, idx) => idx === i ? newState : s))
+        try {
+            await updateFlag(flag.key, newState, flag.rollout_percentage)
+        } catch (err) {
+            console.error('Failed to persist toggle:', err)
+            setFlagStates(prev => prev.map((s, idx) => idx === i ? !newState : s))
+        }
+    }
+
+    async function handleCreateFlag() {
+        try {
+            const created = await createFlag(newFlag.key, newFlag.is_enabled, newFlag.rollout_percentage)
+            setFlags(prev => [...prev, created])
+            setFlagStates(prev => [...prev, created.is_enabled])
+            setShowFlagModal(false)
+            setNewFlag({ key: '', is_enabled: true, rollout_percentage: 100 })
+        } catch (err) {
+            console.error('Failed to create flag:', err)
+        }
+    }
+
+    async function handleDeleteFlag(key) {
+        try {
+            await deleteFlag(key)
+            const updated = flags.filter(f => f.key !== key)
+            setFlags(updated)
+            setFlagStates(updated.map(f => f.is_enabled))
+        } catch (err) {
+            console.error('Failed to delete flag:', err)
+        }
+    }
+
+    async function handleCreateExperiment() {
+        try {
+            const created = await createExperiment(newExp.name, newExp.is_active)
+            setExperiments(prev => [...prev, created])
+            setShowExpModal(false)
+            setNewExp({ name: '', is_active: true })
+        } catch (err) {
+            console.error('Failed to create experiment:', err)
+        }
+    }
+
+    async function handleDeleteExperiment(id) {
+        try {
+            await deleteExperiment(id)
+            setExperiments(prev => prev.filter(e => e.id !== id))
+        } catch (err) {
+            console.error('Failed to delete experiment:', err)
+        }
     }
 
     return (
@@ -155,7 +212,6 @@ export default function Dashboard() {
                         </p>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                        {/* Search */}
                         <div style={{ position: 'relative' }}>
                             <input placeholder="Search flags..." style={{
                                 background: 'var(--bg2)', border: '1px solid var(--border2)',
@@ -165,14 +221,11 @@ export default function Dashboard() {
                             }} />
                             <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--muted)', fontSize: 14 }}>⌕</span>
                         </div>
-                        {/* New flag btn */}
-                        <button style={{
-                            background: 'var(--accent)', color: '#080c10', border: 'none',
-                            padding: '8px 18px', borderRadius: 8, fontSize: 13, fontWeight: 500,
-                            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6
-                        }}>
-                            + New Flag
-                        </button>
+                        <button onClick={() => setShowFlagModal(true)} style={{
+                            background: 'var(--accent)', border: 'none',
+                            color: '#080c10', padding: '8px 16px',
+                            borderRadius: 7, fontSize: 13, fontWeight: 600, cursor: 'pointer'
+                        }}>+ New Flag</button>
                     </div>
                 </header>
 
@@ -182,15 +235,14 @@ export default function Dashboard() {
                     {/* Stats cards */}
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 32 }}>
                         {[
-                            { label: 'Active Flags', value: '12', sub: '+2 this week', color: '#3af07a', icon: '🚩' },
-                            { label: 'Running Experiments', value: '3', sub: '1 ending soon', color: '#1be5ff', icon: '🧪' },
+                            { label: 'Active Flags', value: flags.filter((_, i) => flagStates[i]).length.toString(), sub: 'live flags', color: '#3af07a', icon: '🚩' },
+                            { label: 'Running Experiments', value: experiments.filter(e => e.is_active).length.toString(), sub: 'active now', color: '#1be5ff', icon: '🧪' },
                             { label: 'Events Today', value: '48.2K', sub: '↑ 12% vs yesterday', color: '#f7c948', icon: '📊' },
                             { label: 'Team Members', value: '6', sub: '2 pending invite', color: '#d2a8ff', icon: '👥' },
                         ].map(({ label, value, sub, color, icon }) => (
                             <div key={label} style={{
                                 background: 'var(--bg2)', border: '1px solid var(--border)',
-                                borderRadius: 12, padding: '20px 24px',
-                                transition: 'border-color 0.2s'
+                                borderRadius: 12, padding: '20px 24px', transition: 'border-color 0.2s'
                             }}
                                 onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--border2)'}
                                 onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
@@ -225,7 +277,7 @@ export default function Dashboard() {
                             </div>
                             <div>
                                 {flags.map((flag, i) => (
-                                    <div key={flag.name} style={{
+                                    <div key={flag.key} style={{
                                         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                                         padding: '14px 20px',
                                         borderBottom: i < flags.length - 1 ? '1px solid var(--border)' : 'none',
@@ -257,6 +309,11 @@ export default function Dashboard() {
                                                     transition: 'left 0.2s'
                                                 }} />
                                             </div>
+                                            {/* Delete */}
+                                            <button onClick={() => handleDeleteFlag(flag.key)} style={{
+                                                background: 'none', border: 'none',
+                                                color: '#ff4f6a', cursor: 'pointer', fontSize: 16, padding: '0 4px'
+                                            }}>✕</button>
                                         </div>
                                     </div>
                                 ))}
@@ -302,7 +359,7 @@ export default function Dashboard() {
                                 <div style={{ fontWeight: 600, fontSize: 15 }}>A/B Experiments</div>
                                 <div style={{ fontSize: 12, color: 'var(--muted)', fontFamily: 'var(--font-mono)' }}>{experiments.length} experiments</div>
                             </div>
-                            <button style={{
+                            <button onClick={() => setShowExpModal(true)} style={{
                                 background: 'none', border: '1px solid var(--border2)',
                                 color: 'var(--text)', padding: '6px 14px',
                                 borderRadius: 7, fontSize: 12, cursor: 'pointer'
@@ -312,7 +369,7 @@ export default function Dashboard() {
                             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                                 <thead>
                                     <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                                        {['Experiment', 'Variants', 'Traffic', 'Conversion', 'Status'].map(h => (
+                                        {['Experiment', 'Variants', 'Traffic', 'Conversion', 'Status', ''].map(h => (
                                             <th key={h} style={{
                                                 padding: '10px 20px', textAlign: 'left',
                                                 fontSize: 11, color: 'var(--muted)',
@@ -324,7 +381,7 @@ export default function Dashboard() {
                                 </thead>
                                 <tbody>
                                     {experiments.map((exp, i) => (
-                                        <tr key={exp.name} style={{
+                                        <tr key={exp.id} style={{
                                             borderBottom: i < experiments.length - 1 ? '1px solid var(--border)' : 'none',
                                             transition: 'background 0.15s', cursor: 'pointer'
                                         }}
@@ -347,6 +404,12 @@ export default function Dashboard() {
                                                     {exp.is_active ? 'running' : 'completed'}
                                                 </span>
                                             </td>
+                                            <td style={{ padding: '14px 20px' }}>
+                                                <button onClick={() => handleDeleteExperiment(exp.id)} style={{
+                                                    background: 'none', border: 'none',
+                                                    color: '#ff4f6a', cursor: 'pointer', fontSize: 16
+                                                }}>✕</button>
+                                            </td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -356,6 +419,114 @@ export default function Dashboard() {
 
                 </main>
             </div>
+
+            {/* Flag Modal */}
+            {showFlagModal && (
+                <div style={{
+                    position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
+                    display: 'grid', placeItems: 'center', zIndex: 100
+                }}>
+                    <div style={{
+                        background: 'var(--bg2)', border: '1px solid var(--border2)',
+                        borderRadius: 14, padding: 32, width: 400
+                    }}>
+                        <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 20, marginBottom: 24 }}>New Feature Flag</h3>
+
+                        <label style={{ fontSize: 12, color: 'var(--muted)', display: 'block', marginBottom: 6 }}>Flag Key</label>
+                        <input
+                            value={newFlag.key}
+                            onChange={e => setNewFlag(p => ({ ...p, key: e.target.value }))}
+                            placeholder="e.g. new-checkout-flow"
+                            style={{
+                                width: '100%', background: 'var(--bg3)', border: '1px solid var(--border2)',
+                                color: 'var(--text)', padding: '10px 14px', borderRadius: 8,
+                                fontSize: 14, marginBottom: 16, boxSizing: 'border-box'
+                            }}
+                        />
+
+                        <label style={{ fontSize: 12, color: 'var(--muted)', display: 'block', marginBottom: 6 }}>Rollout %</label>
+                        <input
+                            type="number" min="0" max="100"
+                            value={newFlag.rollout_percentage}
+                            onChange={e => setNewFlag(p => ({ ...p, rollout_percentage: parseInt(e.target.value) }))}
+                            style={{
+                                width: '100%', background: 'var(--bg3)', border: '1px solid var(--border2)',
+                                color: 'var(--text)', padding: '10px 14px', borderRadius: 8,
+                                fontSize: 14, marginBottom: 16, boxSizing: 'border-box'
+                            }}
+                        />
+
+                        <label style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24, cursor: 'pointer' }}>
+                            <input
+                                type="checkbox"
+                                checked={newFlag.is_enabled}
+                                onChange={e => setNewFlag(p => ({ ...p, is_enabled: e.target.checked }))}
+                            />
+                            <span style={{ fontSize: 14 }}>Enabled</span>
+                        </label>
+
+                        <div style={{ display: 'flex', gap: 10 }}>
+                            <button onClick={() => setShowFlagModal(false)} style={{
+                                flex: 1, background: 'none', border: '1px solid var(--border2)',
+                                color: 'var(--text)', padding: 10, borderRadius: 8, cursor: 'pointer'
+                            }}>Cancel</button>
+                            <button onClick={handleCreateFlag} style={{
+                                flex: 1, background: 'var(--accent)', border: 'none',
+                                color: '#080c10', padding: 10, borderRadius: 8,
+                                fontWeight: 600, cursor: 'pointer'
+                            }}>Create Flag</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Experiment Modal */}
+            {showExpModal && (
+                <div style={{
+                    position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
+                    display: 'grid', placeItems: 'center', zIndex: 100
+                }}>
+                    <div style={{
+                        background: 'var(--bg2)', border: '1px solid var(--border2)',
+                        borderRadius: 14, padding: 32, width: 400
+                    }}>
+                        <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 20, marginBottom: 24 }}>New Experiment</h3>
+
+                        <label style={{ fontSize: 12, color: 'var(--muted)', display: 'block', marginBottom: 6 }}>Experiment Name</label>
+                        <input
+                            value={newExp.name}
+                            onChange={e => setNewExp(p => ({ ...p, name: e.target.value }))}
+                            placeholder="e.g. Checkout CTA Test"
+                            style={{
+                                width: '100%', background: 'var(--bg3)', border: '1px solid var(--border2)',
+                                color: 'var(--text)', padding: '10px 14px', borderRadius: 8,
+                                fontSize: 14, marginBottom: 16, boxSizing: 'border-box'
+                            }}
+                        />
+
+                        <label style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24, cursor: 'pointer' }}>
+                            <input
+                                type="checkbox"
+                                checked={newExp.is_active}
+                                onChange={e => setNewExp(p => ({ ...p, is_active: e.target.checked }))}
+                            />
+                            <span style={{ fontSize: 14 }}>Active</span>
+                        </label>
+
+                        <div style={{ display: 'flex', gap: 10 }}>
+                            <button onClick={() => setShowExpModal(false)} style={{
+                                flex: 1, background: 'none', border: '1px solid var(--border2)',
+                                color: 'var(--text)', padding: 10, borderRadius: 8, cursor: 'pointer'
+                            }}>Cancel</button>
+                            <button onClick={handleCreateExperiment} style={{
+                                flex: 1, background: 'var(--accent)', border: 'none',
+                                color: '#080c10', padding: 10, borderRadius: 8,
+                                fontWeight: 600, cursor: 'pointer'
+                            }}>Create</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

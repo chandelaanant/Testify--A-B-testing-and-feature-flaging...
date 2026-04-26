@@ -1,4 +1,4 @@
-const BASE_URL = import.meta.env.VITE_API_URL
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 // Auth
 export async function loginUser(email, password) {
     const res = await fetch(`${BASE_URL}/auth/login`, {
@@ -69,5 +69,49 @@ export async function getAllFlags() {
 export async function getAllExperiments() {
     const res = await fetch(`${BASE_URL}/analytics/`)
     if (!res.ok) throw new Error('Failed to fetch experiments')
+    return res.json()
+}
+export async function createFlag(key, is_enabled, rollout_percentage) {
+    const res = await fetch(`${BASE_URL}/flag/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key, is_enabled, rollout_percentage })
+    })
+    if (!res.ok) throw new Error('Failed to create flag')
+    return res.json()
+}
+
+export async function updateFlag(key, is_enabled, rollout_percentage) {
+    const res = await fetch(`${BASE_URL}/flag/${key}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key, is_enabled, rollout_percentage })
+    })
+    if (!res.ok) throw new Error('Failed to update flag')
+    return res.json()
+}
+
+export async function deleteFlag(key) {
+    const res = await fetch(`${BASE_URL}/flag/${key}`, {
+        method: 'DELETE'
+    })
+    if (!res.ok) throw new Error('Failed to delete flag')
+    return res.json()
+}
+export async function createExperiment(name, is_active) {
+    const res = await fetch(`${BASE_URL}/analytics/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, is_active })
+    })
+    if (!res.ok) throw new Error('Failed to create experiment')
+    return res.json()
+}
+
+export async function deleteExperiment(id) {
+    const res = await fetch(`${BASE_URL}/analytics/${id}`, {
+        method: 'DELETE'
+    })
+    if (!res.ok) throw new Error('Failed to delete experiment')
     return res.json()
 }
